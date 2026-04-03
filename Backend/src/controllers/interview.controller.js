@@ -1,15 +1,40 @@
-const pdfParse = require("pdf-parse");
+// const pdfParse = require("pdf-parse");
+const PDFParser = require("pdf2json");
 const {
   generateInterviewReport,
   generateResumePdf,
 } = require("../services/ai.service");
 const interviewReportModel = require("../models/interview.report.model");
 
+function parsePDF(buffer) {
+  return new Promise((resolve, reject) => {
+    const pdfParser = new PDFParser();
+
+    pdfParser.on("pdfParser_dataError", (err) => reject(err));
+
+    pdfParser.on("pdfParser_dataReady", (pdfData) => {
+      let text = "";
+
+      pdfData.Pages.forEach((page) => {
+        page.Texts.forEach((textItem) => {
+          textItem.R.forEach((r) => {
+            text += decodeURIComponent(r.T) + " ";
+          });
+        });
+      });
+
+      resolve(text);
+    });
+
+    pdfParser.parseBuffer(buffer);
+  });
+}
+
 /**
  * @description generate new interview report on the basis of user self description, resume pdf and job description
  */
 async function generateInterviewReportController(req, res) {
-  const resumeContent = await pdfParse(req.file.buffer);
+  const resumeContent = await parsePDF(req.file.buffer);
   // const resumeContent = await new pdfParse.PDFParse(
   //   Uint8Array.from(req.file.buffer),
   // ).getText();
@@ -23,7 +48,7 @@ async function generateInterviewReportController(req, res) {
 
   const interviewReport = await interviewReportModel.create({
     user: req.user.id,
-    resume: resumeContent.text,
+    resume: resumeContent,
     selfDeclaration: selfDescription,
     jobDescription,
     ...interviewReportByAi,
