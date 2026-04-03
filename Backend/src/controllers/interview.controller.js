@@ -1,4 +1,5 @@
-const pdfParse = require("pdf-parse");
+// const pdfParse = require("pdf-parse");
+import pdfParse from "pdf-parse/lib/pdf-parse.js";
 const {
   generateInterviewReport,
   generateResumePdf,
@@ -9,9 +10,9 @@ const interviewReportModel = require("../models/interview.report.model");
  * @description generate new interview report on the basis of user self description, resume pdf and job description
  */
 async function generateInterviewReportController(req, res) {
-  const resumeContent = await new pdfParse.PDFParse(
-    Uint8Array.from(req.file.buffer),
-  ).getText();
+  // const resumeContent = await new pdfParse.PDFParse(
+  //   Uint8Array.from(req.file.buffer),
+  // ).getText();
   const { selfDescription, jobDescription } = req.body;
 
   const interviewReportByAi = await generateInterviewReport({
