@@ -70,29 +70,30 @@ async function registerUserController(req, res) {
  * @access Public
  */
 async function loginUserController(req, res) {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const user = await userModel.findOne({ email });
+    const user = await userModel.findOne({ email });
 
-  if (!user) {
-    return res.status(400).json({
-      message: "Invalid email or password",
-    });
-  }
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid email or password",
+      });
+    }
 
-  const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-  if (!isPasswordValid) {
-    return res.status(400).json({
-      message: "Invalid email or password",
-    });
-  }
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        message: "Invalid email or password",
+      });
+    }
 
-  const token = jwt.sign(
-    { id: user._id, username: user.username },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" },
-  );
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
 
   res.cookie("token", token, cookieOptions);
   res.status(200).json({
@@ -116,7 +117,12 @@ async function logoutUserController(req, res) {
   if (token) {
     await blacklistTokenModel.create({ token });
   }
-  res.clearCookie("token");
+  // res.clearCookie("token");
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
   res.status(200).json({
     message: "User logged out successfully",
   });
